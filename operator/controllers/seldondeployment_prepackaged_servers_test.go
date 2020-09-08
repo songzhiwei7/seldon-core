@@ -2,6 +2,10 @@ package controllers
 
 import (
 	"context"
+	"strconv"
+	"strings"
+	"time"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	machinelearningv1 "github.com/seldonio/seldon-core/operator/apis/machinelearning.seldon.io/v1"
@@ -12,9 +16,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"strconv"
-	"strings"
-	"time"
 )
 
 var _ = Describe("Create a prepacked sklearn server", func() {
@@ -46,7 +47,7 @@ var _ = Describe("Create a prepacked sklearn server", func() {
 							Name:           "classifier",
 							Type:           &modelType,
 							Implementation: &impl,
-							Endpoint:       &machinelearningv1.Endpoint{Type: machinelearningv1.REST},
+							Endpoints:      []machinelearningv1.Endpoint{{Type: machinelearningv1.REST}},
 						},
 					},
 				},
@@ -120,7 +121,7 @@ var _ = Describe("Create a prepacked tfserving server for Seldon protocol and RE
 							Name:           "classifier",
 							Type:           &modelType,
 							Implementation: &impl,
-							Endpoint:       &machinelearningv1.Endpoint{Type: machinelearningv1.REST},
+							Endpoints:      []machinelearningv1.Endpoint{{Type: machinelearningv1.REST}},
 						},
 					},
 				},
@@ -208,7 +209,7 @@ var _ = Describe("Create a prepacked tfserving server for tensorflow protocol an
 							Name:           modelName,
 							Type:           &modelType,
 							Implementation: &impl,
-							Endpoint:       &machinelearningv1.Endpoint{Type: machinelearningv1.REST},
+							Endpoints:      []machinelearningv1.Endpoint{{Type: machinelearningv1.REST}},
 						},
 					},
 				},
@@ -311,7 +312,7 @@ var _ = Describe("Create a prepacked tfserving server for tensorflow protocol an
 							Name:           modelName,
 							Type:           &modelType,
 							Implementation: &impl,
-							Endpoint:       &machinelearningv1.Endpoint{Type: machinelearningv1.REST},
+							Endpoints:      []machinelearningv1.Endpoint{{Type: machinelearningv1.REST}},
 						},
 					},
 				},
@@ -431,9 +432,8 @@ var _ = Describe("Create a prepacked tfserving server for tensorflow protocol an
 				Namespace: key.Namespace,
 			},
 			Spec: machinelearningv1.SeldonDeploymentSpec{
-				Name:      name,
-				Protocol:  machinelearningv1.ProtocolTensorflow,
-				Transport: machinelearningv1.TransportGrpc,
+				Name:     name,
+				Protocol: machinelearningv1.ProtocolTensorflow,
 				Predictors: []machinelearningv1.PredictorSpec{
 					{
 						Name: "p1",
@@ -441,7 +441,7 @@ var _ = Describe("Create a prepacked tfserving server for tensorflow protocol an
 							Name:           modelName,
 							Type:           &modelType,
 							Implementation: &impl,
-							Endpoint:       &machinelearningv1.Endpoint{Type: machinelearningv1.GRPC},
+							Endpoints:      []machinelearningv1.Endpoint{{Type: machinelearningv1.GRPC}},
 						},
 					},
 				},
@@ -666,7 +666,7 @@ var _ = Describe("Create a prepacked triton server", func() {
 							Name:           modelName,
 							Type:           &modelType,
 							Implementation: &impl,
-							Endpoint:       &machinelearningv1.Endpoint{Type: machinelearningv1.REST},
+							Endpoints:      []machinelearningv1.Endpoint{{Type: machinelearningv1.REST}},
 						},
 					},
 				},

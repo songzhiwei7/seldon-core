@@ -1,9 +1,10 @@
 package v1
 
 import (
+	"testing"
+
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
-	"testing"
 )
 
 func TestImageSetNormal(t *testing.T) {
@@ -17,28 +18,28 @@ func TestImageSetNormal(t *testing.T) {
 		desiredImageName string
 	}{
 		"GRPC image with version": {
-			pu: &PredictiveUnit{Endpoint: &Endpoint{Type: GRPC}},
+			pu: &PredictiveUnit{Endpoints: []Endpoint{{Type: GRPC}}},
 			config: &PredictorServerConfig{
 				GrpcConfig: PredictorImageConfig{ContainerImage: "a", DefaultImageVersion: "1"},
 			},
 			desiredImageName: "a:1",
 		},
 		"GRPC image with no version": {
-			pu: &PredictiveUnit{Endpoint: &Endpoint{Type: GRPC}},
+			pu: &PredictiveUnit{Endpoints: []Endpoint{{Type: GRPC}}},
 			config: &PredictorServerConfig{
 				GrpcConfig: PredictorImageConfig{ContainerImage: "a"},
 			},
 			desiredImageName: "a",
 		},
 		"REST image with version": {
-			pu: &PredictiveUnit{Endpoint: &Endpoint{Type: REST}},
+			pu: &PredictiveUnit{Endpoints: []Endpoint{{Type: REST}}},
 			config: &PredictorServerConfig{
 				RestConfig: PredictorImageConfig{ContainerImage: "a", DefaultImageVersion: "1"},
 			},
 			desiredImageName: "a:1",
 		},
 		"REST image with no version": {
-			pu: &PredictiveUnit{Endpoint: &Endpoint{Type: REST}},
+			pu: &PredictiveUnit{Endpoints: []Endpoint{{Type: REST}}},
 			config: &PredictorServerConfig{
 				RestConfig: PredictorImageConfig{ContainerImage: "a"},
 			},

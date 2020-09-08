@@ -4147,6 +4147,18 @@ spec:
                           type:
                             type: string
                         type: object
+                      endpoints:
+                        items:
+                          properties:
+                            service_host:
+                              type: string
+                            service_port:
+                              format: int32
+                              type: integer
+                            type:
+                              type: string
+                          type: object
+                        type: array
                       envSecretRefName:
                         type: string
                       implementation:

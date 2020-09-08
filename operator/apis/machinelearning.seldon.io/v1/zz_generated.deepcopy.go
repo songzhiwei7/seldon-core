@@ -150,10 +150,10 @@ func (in *PredictiveUnit) DeepCopyInto(out *PredictiveUnit) {
 			copy(*out, *in)
 		}
 	}
-	if in.Endpoint != nil {
-		in, out := &in.Endpoint, &out.Endpoint
-		*out = new(Endpoint)
-		**out = **in
+	if in.Endpoints != nil {
+		in, out := &in.Endpoints, &out.Endpoints
+		*out = make([]Endpoint, len(*in))
+		copy(*out, *in)
 	}
 	if in.Parameters != nil {
 		in, out := &in.Parameters, &out.Parameters

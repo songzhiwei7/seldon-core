@@ -71,10 +71,10 @@ func createTensorflowServingContainer(pu *machinelearningv1.PredictiveUnit, tens
 	restPort := int32(constants.TfServingRestPort)
 	name := constants.TFServingContainerName
 	if tensorflowProtocol {
-		if pu.Endpoint.Type == machinelearningv1.GRPC {
-			grpcPort = pu.Endpoint.ServicePort
+		if pu.Endpoints[0].Type == machinelearningv1.GRPC {
+			grpcPort = pu.Endpoints[0].ServicePort
 		} else {
-			restPort = pu.Endpoint.ServicePort
+			restPort = pu.Endpoints[0].ServicePort
 		}
 		name = pu.Name
 	}
@@ -282,8 +282,8 @@ func (pi *PrePackedInitialiser) addModelDefaultServers(pu *machinelearningv1.Pre
 	ty := machinelearningv1.MODEL
 	pu.Type = &ty
 
-	if pu.Endpoint == nil {
-		pu.Endpoint = &machinelearningv1.Endpoint{Type: machinelearningv1.REST}
+	if pu.Endpoints == nil {
+		pu.Endpoints = []machinelearningv1.Endpoint{{Type: machinelearningv1.REST}}
 	}
 	c := utils.GetContainerForDeployment(deploy, pu.Name)
 	existing := c != nil
@@ -358,7 +358,7 @@ func SetUriParamsForTFServingProxyContainer(pu *machinelearningv1.PredictiveUnit
 	if !hasUriParams {
 		var uriParam machinelearningv1.Parameter
 
-		if pu.Endpoint.Type == machinelearningv1.REST {
+		if pu.Endpoints[0].Type == machinelearningv1.REST {
 			uriParam = machinelearningv1.Parameter{
 				Name:  "rest_endpoint",
 				Type:  "STRING",

@@ -99,8 +99,8 @@ func (ei *ExplainerInitialiser) createExplainer(mlDep *machinelearningv1.SeldonD
 			explainerContainer.ImagePullPolicy = corev1.PullIfNotPresent
 		}
 
-		if p.Graph.Endpoint == nil {
-			p.Graph.Endpoint = &machinelearningv1.Endpoint{Type: machinelearningv1.REST}
+		if p.Graph.Endpoints == nil {
+			p.Graph.Endpoints = []machinelearningv1.Endpoint{machinelearningv1.Endpoint{Type: machinelearningv1.REST}}
 		}
 
 		// Image from configMap or Relalated Image if its not set
@@ -130,7 +130,7 @@ func (ei *ExplainerInitialiser) createExplainer(mlDep *machinelearningv1.SeldonD
 		httpPort = int(portNum)
 		customPort := getPort(portType, explainerContainer.Ports)
 
-		if mlDep.Spec.Transport == machinelearningv1.TransportGrpc || (p.Explainer.Endpoint != nil && p.Explainer.Endpoint.Type == machinelearningv1.GRPC) {
+		if p.Explainer.Endpoint != nil && p.Explainer.Endpoint.Type == machinelearningv1.GRPC {
 			explainerTransport = "grpc"
 			pSvcEndpoint = c.serviceDetails[pSvcName].GrpcEndpoint
 		} else {
