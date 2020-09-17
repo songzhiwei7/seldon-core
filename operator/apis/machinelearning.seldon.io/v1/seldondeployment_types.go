@@ -23,6 +23,7 @@ import (
 
 	kedav1alpha1 "github.com/kedacore/keda/api/v1alpha1"
 	"github.com/seldonio/seldon-core/operator/constants"
+	istio_networking "istio.io/api/networking/v1alpha3"
 	autoscalingv2beta2 "k8s.io/api/autoscaling/v2beta1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -229,6 +230,7 @@ type PredictorSpec struct {
 	Labels          map[string]string       `json:"labels,omitempty" protobuf:"bytes,7,opt,name=labels"`
 	SvcOrchSpec     SvcOrchSpec             `json:"svcOrchSpec,omitempty" protobuf:"bytes,8,opt,name=svcOrchSpec"`
 	Traffic         int32                   `json:"traffic,omitempty" protobuf:"bytes,9,opt,name=traffic"`
+	TrafficMatchs   []HTTPMatchRequest      `json:"trafficMatchs,omitempty" protobuf:"bytes,9,opt,name=trafficMatchs"`
 	Explainer       *Explainer              `json:"explainer,omitempty" protobuf:"bytes,10,opt,name=explainer"`
 	Shadow          bool                    `json:"shadow,omitempty" protobuf:"bytes,11,opt,name=shadow"`
 	SSL             *SSL                    `json:"ssl,omitempty" protobuf:"bytes,11,opt,name=ssl"`
@@ -275,6 +277,59 @@ const (
 	AlibiALEExplainer                 AlibiExplainerType = "ALE"
 	AlibiTreeShap                     AlibiExplainerType = "TreeShap"
 )
+
+// HTTPMatchRequest specify rules to match requests. All rules are ANDed.
+type HTTPMatchRequest struct {
+	// Match headers of a request.
+	Headers map[string]StringMatch `json:"headers"`
+}
+
+// StringMatch defines 3 different types of matching strategy, i.e. only match prefix,
+// exact string match, and regular expression match.
+type StringMatch struct {
+	Prefix  string `json:"prefix,omitempty"`
+	Exact   string `json:"exact,omitempty"`
+	Regex   string `json:"regex,omitempty"`
+	Include string `json:"include,omitempty"`
+	Exclude string `json:"exclude,omitempty"`
+}
+
+// ConvertIstioStringMatch convert the StringMatch type in this file to *istio_networking.StringMatch.
+func ConvertIstioStringMatch(match StringMatch) *istio_networking.StringMatch {
+	if match.Exact != "" {
+		return &istio_networking.StringMatch{
+			MatchType: &istio_networking.StringMatch_Exact{
+				Exact: match.Exact,
+			},
+		}
+	} else if match.Prefix != "" {
+		return &istio_networking.StringMatch{
+			MatchType: &istio_networking.StringMatch_Prefix{
+				Prefix: match.Prefix,
+			},
+		}
+	} else if match.Regex != "" {
+		return &istio_networking.StringMatch{
+			MatchType: &istio_networking.StringMatch_Regex{
+				Regex: match.Regex,
+			},
+		}
+	} else if match.Include != "" {
+		return &istio_networking.StringMatch{
+			MatchType: &istio_networking.StringMatch_Regex{
+				Regex: match.Include,
+			},
+		}
+	} else if match.Exclude != "" {
+		return &istio_networking.StringMatch{
+			MatchType: &istio_networking.StringMatch_Regex{
+				Regex: match.Exclude,
+			},
+		}
+	}
+
+	return nil
+}
 
 type Explainer struct {
 	Type               AlibiExplainerType `json:"type,omitempty" protobuf:"string,1,opt,name=type"`

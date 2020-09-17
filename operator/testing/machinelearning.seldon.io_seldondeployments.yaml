@@ -4329,6 +4329,31 @@ spec:
                   traffic:
                     format: int32
                     type: integer
+                  trafficMatchs:
+                    items:
+                      description: HTTPMatchRequest specify rules to match requests. All rules are ANDed.
+                      properties:
+                        headers:
+                          additionalProperties:
+                            description: StringMatch defines 3 different types of matching strategy, i.e. only match prefix, exact string match, and regular expression match.
+                            properties:
+                              exact:
+                                type: string
+                              exclude:
+                                type: string
+                              include:
+                                type: string
+                              prefix:
+                                type: string
+                              regex:
+                                type: string
+                            type: object
+                          description: Match headers of a request.
+                          type: object
+                      required:
+                      - headers
+                      type: object
+                    type: array
                 required:
                 - graph
                 - name

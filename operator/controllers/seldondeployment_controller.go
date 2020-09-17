@@ -228,6 +228,46 @@ func createIstioResources(mlDep *machinelearningv1.SeldonDeployment,
 			return nil, nil, err
 		}
 	}
+
+	getDefaultHttpRoute := func() istio_networking.HTTPRoute {
+		route := istio_networking.HTTPRoute{
+			Match: []*istio_networking.HTTPMatchRequest{
+				{
+					Uri: &istio_networking.StringMatch{MatchType: &istio_networking.StringMatch_Prefix{Prefix: "/seldon/" + namespace + "/" + mlDep.Name + "/"}},
+				},
+			},
+			Rewrite: &istio_networking.HTTPRewrite{Uri: "/"},
+		}
+
+		if istioRetries > 0 {
+			route.Retries = &istio_networking.HTTPRetry{Attempts: int32(istioRetries), PerTryTimeout: &types2.Duration{Seconds: int64(istioRetriesTimeout)}, RetryOn: "gateway-error,connect-failure,refused-stream"}
+		}
+
+		return route
+	}
+
+	getDefaultGrpcRoute := func() istio_networking.HTTPRoute {
+		route := istio_networking.HTTPRoute{
+			Match: []*istio_networking.HTTPMatchRequest{
+				{
+					Uri: &istio_networking.StringMatch{MatchType: &istio_networking.StringMatch_Regex{Regex: istioGRPCRegExMatchURI}},
+					Headers: map[string]*istio_networking.StringMatch{
+						"seldon":    &istio_networking.StringMatch{MatchType: &istio_networking.StringMatch_Exact{Exact: mlDep.Name}},
+						"namespace": &istio_networking.StringMatch{MatchType: &istio_networking.StringMatch_Exact{Exact: namespace}},
+					},
+				},
+			},
+		}
+
+		if istioRetries > 0 {
+			route.Retries = &istio_networking.HTTPRetry{Attempts: int32(istioRetries), PerTryTimeout: &types2.Duration{Seconds: int64(istioRetriesTimeout)}, RetryOn: "gateway-error,connect-failure,refused-stream"}
+		}
+		return route
+	}
+
+	wightTrafficHttpRoute := getDefaultHttpRoute()
+	wightTrafficGrpcRoute := getDefaultGrpcRoute()
+
 	httpVsvc := &istio.VirtualService{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      seldonId + "-http",
@@ -236,16 +276,7 @@ func createIstioResources(mlDep *machinelearningv1.SeldonDeployment,
 		Spec: istio_networking.VirtualService{
 			Hosts:    []string{"*"},
 			Gateways: []string{getAnnotation(mlDep, ANNOTATION_ISTIO_GATEWAY, istio_gateway)},
-			Http: []*istio_networking.HTTPRoute{
-				{
-					Match: []*istio_networking.HTTPMatchRequest{
-						{
-							Uri: &istio_networking.StringMatch{MatchType: &istio_networking.StringMatch_Prefix{Prefix: "/seldon/" + namespace + "/" + mlDep.Name + "/"}},
-						},
-					},
-					Rewrite: &istio_networking.HTTPRewrite{Uri: "/"},
-				},
-			},
+			Http:     []*istio_networking.HTTPRoute{},
 		},
 	}
 
@@ -257,25 +288,8 @@ func createIstioResources(mlDep *machinelearningv1.SeldonDeployment,
 		Spec: istio_networking.VirtualService{
 			Hosts:    []string{"*"},
 			Gateways: []string{getAnnotation(mlDep, ANNOTATION_ISTIO_GATEWAY, istio_gateway)},
-			Http: []*istio_networking.HTTPRoute{
-				{
-					Match: []*istio_networking.HTTPMatchRequest{
-						{
-							Uri: &istio_networking.StringMatch{MatchType: &istio_networking.StringMatch_Regex{Regex: istioGRPCRegExMatchURI}},
-							Headers: map[string]*istio_networking.StringMatch{
-								"seldon":    &istio_networking.StringMatch{MatchType: &istio_networking.StringMatch_Exact{Exact: mlDep.Name}},
-								"namespace": &istio_networking.StringMatch{MatchType: &istio_networking.StringMatch_Exact{Exact: namespace}},
-							},
-						},
-					},
-				},
-			},
+			Http:     []*istio_networking.HTTPRoute{},
 		},
-	}
-	// Add retries
-	if istioRetries > 0 {
-		httpVsvc.Spec.Http[0].Retries = &istio_networking.HTTPRetry{Attempts: int32(istioRetries), PerTryTimeout: &types2.Duration{Seconds: int64(istioRetriesTimeout)}, RetryOn: "gateway-error,connect-failure,refused-stream"}
-		grpcVsvc.Spec.Http[0].Retries = &istio_networking.HTTPRetry{Attempts: int32(istioRetries), PerTryTimeout: &types2.Duration{Seconds: int64(istioRetriesTimeout)}, RetryOn: "gateway-error,connect-failure,refused-stream"}
 	}
 
 	// shadows don't get destinations in the vs as a shadow is a mirror instead
@@ -293,7 +307,10 @@ func createIstioResources(mlDep *machinelearningv1.SeldonDeployment,
 	// the shdadow/mirror entry does need a DestinationRule though
 	drules := make([]*istio.DestinationRule, len(mlDep.Spec.Predictors))
 	routesIdx := 0
+	isContentTraffic := false
 	for i := 0; i < len(mlDep.Spec.Predictors); i++ {
+		httpRoute := getDefaultHttpRoute()
+		grpcRoute := getDefaultGrpcRoute()
 
 		p := mlDep.Spec.Predictors[i]
 		pSvcName := machinelearningv1.GetPredictorKey(mlDep, &p)
@@ -329,21 +346,23 @@ func createIstioResources(mlDep *machinelearningv1.SeldonDeployment,
 		if p.Shadow == true {
 			//if there's a shadow then add a mirror section to the VirtualService
 
-			httpVsvc.Spec.Http[0].Mirror = &istio_networking.Destination{
+			httpRoute.Mirror = &istio_networking.Destination{
 				Host:   pSvcName,
 				Subset: p.Name,
 				Port: &istio_networking.PortSelector{
 					Number: uint32(ports[i].httpPort),
 				},
 			}
+			wightTrafficHttpRoute.Mirror = httpRoute.Mirror
 
-			grpcVsvc.Spec.Http[0].Mirror = &istio_networking.Destination{
+			grpcRoute.Mirror = &istio_networking.Destination{
 				Host:   pSvcName,
 				Subset: p.Name,
 				Port: &istio_networking.PortSelector{
 					Number: uint32(ports[i].grpcPort),
 				},
 			}
+			wightTrafficGrpcRoute.Mirror = grpcRoute.Mirror
 
 			continue
 		}
@@ -358,7 +377,6 @@ func createIstioResources(mlDep *machinelearningv1.SeldonDeployment,
 					Number: uint32(ports[i].httpPort),
 				},
 			},
-			Weight: p.Traffic,
 		}
 		routesGrpc[routesIdx] = &istio_networking.HTTPRouteDestination{
 			Destination: &istio_networking.Destination{
@@ -368,13 +386,50 @@ func createIstioResources(mlDep *machinelearningv1.SeldonDeployment,
 					Number: uint32(ports[i].grpcPort),
 				},
 			},
-			Weight: p.Traffic,
+		}
+
+		if p.Traffic != 0 {
+			routesHttp[routesIdx].Weight = p.Traffic
+			routesGrpc[routesIdx].Weight = p.Traffic
+		}
+
+		// set traffic by http header
+		for _, match := range mlDep.Spec.Predictors[i].TrafficMatchs {
+			isContentTraffic = true
+
+			headers := make(map[string]*istio_networking.StringMatch)
+
+			for key, value := range match.Headers {
+				stringMatchPtr := machinelearningv1.ConvertIstioStringMatch(value)
+				if stringMatchPtr == nil {
+					continue
+				}
+				headers[key] = stringMatchPtr
+			}
+
+			if len(httpRoute.Match) > 0 {
+				// For http
+				httpRoute.Match[0].Headers = mergeIstioMatchHeaders(httpRoute.Match[0].Headers, headers)
+				httpRoute.Route = []*istio_networking.HTTPRouteDestination{routesHttp[routesIdx]}
+				httpVsvc.Spec.Http = append(httpVsvc.Spec.Http, &httpRoute)
+
+				// For grpc
+				grpcRoute.Match[0].Headers = mergeIstioMatchHeaders(grpcRoute.Match[0].Headers, headers)
+				grpcRoute.Route = []*istio_networking.HTTPRouteDestination{routesGrpc[routesIdx]}
+				grpcVsvc.Spec.Http = append(grpcVsvc.Spec.Http, &grpcRoute)
+			}
 		}
 		routesIdx += 1
-
 	}
-	httpVsvc.Spec.Http[0].Route = routesHttp
-	grpcVsvc.Spec.Http[0].Route = routesGrpc
+
+	// Traffic by weight
+	if !isContentTraffic {
+		wightTrafficHttpRoute.Route = routesHttp
+		httpVsvc.Spec.Http = append(httpVsvc.Spec.Http, &wightTrafficHttpRoute)
+
+		wightTrafficGrpcRoute.Route = routesGrpc
+		grpcVsvc.Spec.Http = append(grpcVsvc.Spec.Http, &wightTrafficGrpcRoute)
+	}
 
 	if httpAllowed && grpcAllowed {
 		vscs := make([]*istio.VirtualService, 2)
@@ -403,6 +458,19 @@ func getEngineHttpPort() (engine_http_port int, err error) {
 		}
 	}
 	return engine_http_port, nil
+}
+
+func mergeIstioMatchHeaders(headers1 map[string]*istio_networking.StringMatch, headers2 map[string]*istio_networking.StringMatch) map[string]*istio_networking.StringMatch {
+	mergedHeaders := make(map[string]*istio_networking.StringMatch, 0)
+	for key, val := range headers1 {
+		mergedHeaders[key] = val
+	}
+
+	for key, val := range headers2 {
+		mergedHeaders[key] = val
+	}
+
+	return mergedHeaders
 }
 
 func getEngineGrpcPort() (engine_grpc_port int, err error) {

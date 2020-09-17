@@ -373,8 +373,15 @@ func (r *SeldonDeploymentSpec) checkPredictiveUnits(pu *PredictiveUnit, p *Predi
 func checkTraffic(spec *SeldonDeploymentSpec, fldPath *field.Path, allErrs field.ErrorList) field.ErrorList {
 	var trafficSum int32 = 0
 	var shadows int = 0
+	var trafficMatchsNum int = 0
 	for i := 0; i < len(spec.Predictors); i++ {
 		p := spec.Predictors[i]
+
+		if len(p.TrafficMatchs) != 0 {
+			trafficMatchsNum++
+			continue
+		}
+
 		trafficSum = trafficSum + p.Traffic
 
 		if p.Shadow == true {
@@ -383,6 +390,11 @@ func checkTraffic(spec *SeldonDeploymentSpec, fldPath *field.Path, allErrs field
 				allErrs = append(allErrs, field.Invalid(fldPath, spec.Predictors[i].Name, "Multiple shadows are not allowed"))
 			}
 		}
+	}
+
+	// Traffic diversion by header, not check traffic diversion by weight.
+	if trafficMatchsNum != 0 {
+		return allErrs
 	}
 
 	if trafficSum != 100 && (len(spec.Predictors)-shadows) > 1 {
