@@ -39,6 +39,8 @@ spec:
         command:
         - /manager
         env:
+        - name: ISTIO_GRPC_MATCH_URI
+          value: '.*nvidia\.inferenceserver.*'
         - name: WATCH_NAMESPACE
           value: ''
         - name: RELATED_IMAGE_EXECUTOR
