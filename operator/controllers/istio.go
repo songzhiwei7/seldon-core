@@ -7,5 +7,4 @@ const (
 	ANNOTATION_ISTIO_GATEWAY         = "seldon.io/istio-gateway"
 	ANNOTATION_ISTIO_RETRIES         = "seldon.io/istio-retries"
 	ANNOTATION_ISTIO_RETRIES_TIMEOUT = "seldon.io/istio-retries-timeout"
-	ENV_ISTIO_GRPC_MATCH_URI         = "ISTIO_GRPC_MATCH_URI"
 )

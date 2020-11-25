@@ -167,17 +167,17 @@ func GetPredictiveUnit(pu *PredictiveUnit, name string) *PredictiveUnit {
 
 // if engine is not separated then this tells us which pu it should go on, as the mutating webhook handler has set host as localhost on the pu
 func GetEnginePredictiveUnit(pu *PredictiveUnit) *PredictiveUnit {
-	if pu.Endpoints != nil && pu.Endpoints[0].ServiceHost == "localhost" {
+	if pu.Endpoint != nil && pu.Endpoint.ServiceHost == "localhost" {
 		return pu
-	}
-	for i := 0; i < len(pu.Children); i++ {
-		found := GetEnginePredictiveUnit(&pu.Children[i])
-		if found != nil {
-			return found
+	} else {
+		for i := 0; i < len(pu.Children); i++ {
+			found := GetEnginePredictiveUnit(&pu.Children[i])
+			if found != nil {
+				return found
+			}
 		}
+		return nil
 	}
-	return nil
-
 }
 
 func GetPredictiveUnitList(p *PredictiveUnit) (list []*PredictiveUnit) {
@@ -454,7 +454,7 @@ type PredictiveUnit struct {
 	Type               *PredictiveUnitType           `json:"type,omitempty" protobuf:"int,3,opt,name=type"`
 	Implementation     *PredictiveUnitImplementation `json:"implementation,omitempty" protobuf:"int,4,opt,name=implementation"`
 	Methods            *[]PredictiveUnitMethod       `json:"methods,omitempty" protobuf:"int,5,opt,name=methods"`
-	Endpoints          []Endpoint                    `json:"endpoints,omitempty" protobuf:"bytes,6,opt,name=endpoints"`
+	Endpoint           *Endpoint                     `json:"endpoint,omitempty" protobuf:"bytes,6,opt,name=endpoint"`
 	Parameters         []Parameter                   `json:"parameters,omitempty" protobuf:"bytes,7,opt,name=parameters"`
 	ModelURI           string                        `json:"modelUri,omitempty" protobuf:"bytes,8,opt,name=modelUri"`
 	ServiceAccountName string                        `json:"serviceAccountName,omitempty" protobuf:"bytes,9,opt,name=serviceAccountName"`
