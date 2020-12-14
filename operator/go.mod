@@ -14,9 +14,9 @@ require (
 	gopkg.in/yaml.v2 v2.3.0
 	istio.io/api v0.0.0-20200513175333-ae3da0d240e3
 	istio.io/client-go v0.0.0-20200513180646-f8d9d8ff84e6
-	k8s.io/api v0.19.2
-	k8s.io/apiextensions-apiserver v0.19.2
-	k8s.io/apimachinery v0.19.2
+	k8s.io/api v0.19.3
+	k8s.io/apiextensions-apiserver v0.19.3
+	k8s.io/apimachinery v0.19.3
 	k8s.io/client-go v12.0.0+incompatible
 	knative.dev/pkg v0.0.0-20200911145400-2d4efecc6bc1
 	sigs.k8s.io/controller-runtime v0.6.4
@@ -24,7 +24,7 @@ require (
 
 replace (
 	github.com/go-logr/logr => github.com/go-logr/logr v0.1.0
-	k8s.io/client-go => k8s.io/client-go v0.19.2
+	k8s.io/client-go => k8s.io/client-go v0.19.3
 	k8s.io/klog/v2 => k8s.io/klog/v2 v2.1.0
-	k8s.io/metrics => k8s.io/metrics v0.19.2
+	k8s.io/metrics => k8s.io/metrics v0.19.3
 )
