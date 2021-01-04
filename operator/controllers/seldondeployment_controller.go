@@ -309,6 +309,9 @@ func createIstioResources(mlDep *machinelearningv1.SeldonDeployment,
 		httpRoute := getDefaultHttpRoute()
 		grpcRoute := getDefaultGrpcRoute()
 
+		defaultHttpRoute := getDefaultHttpRoute()
+		defaultGrpcRoute := getDefaultGrpcRoute()
+
 		p := mlDep.Spec.Predictors[i]
 		pSvcName := machinelearningv1.GetPredictorKey(mlDep, &p)
 
@@ -416,6 +419,17 @@ func createIstioResources(mlDep *machinelearningv1.SeldonDeployment,
 				grpcVsvc.Spec.Http = append(grpcVsvc.Spec.Http, &grpcRoute)
 			}
 		}
+
+		if isContentTraffic {
+			if mlDep.Spec.Predictors[i].Name == mlDep.Spec.DefaultPredictor {
+				defaultHttpRoute.Route = []*istio_networking.HTTPRouteDestination{routesHttp[routesIdx]}
+				httpVsvc.Spec.Http = append(httpVsvc.Spec.Http, &defaultHttpRoute)
+
+				defaultGrpcRoute.Route = []*istio_networking.HTTPRouteDestination{routesGrpc[routesIdx]}
+				grpcVsvc.Spec.Http = append(grpcVsvc.Spec.Http, &defaultGrpcRoute)
+			}
+		}
+
 		routesIdx += 1
 	}
 
