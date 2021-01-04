@@ -38,6 +38,8 @@ spec:
                 additionalProperties:
                   type: string
                 type: object
+              defaultPredictor:
+                type: string
               name:
                 description: Name is Deprecated will be removed in future
                 type: string
@@ -5843,6 +5845,8 @@ spec:
                 additionalProperties:
                   type: string
                 type: object
+              defaultPredictor:
+                type: string
               name:
                 description: Name is Deprecated will be removed in future
                 type: string
@@ -11648,6 +11652,8 @@ spec:
                 additionalProperties:
                   type: string
                 type: object
+              defaultPredictor:
+                type: string
               name:
                 description: Name is Deprecated will be removed in future
                 type: string
