@@ -953,23 +953,8 @@ func createDeploymentWithoutEngine(depName string, seldonId string, seldonPodSpe
 		deploy.Spec.Template.ObjectMeta.Labels[machinelearningv1.Label_shadow] = "true"
 	}
 
-	//Add annotations from top level
-	for k, v := range mlDep.Spec.Annotations {
-		deploy.Annotations[k] = v
-		deploy.Spec.Template.ObjectMeta.Annotations[k] = v
-	}
-	// Add annottaions from predictor
-	for k, v := range p.Annotations {
-		deploy.Annotations[k] = v
-		deploy.Spec.Template.ObjectMeta.Annotations[k] = v
-	}
 	if seldonPodSpec != nil {
 		deploy.Spec.Template.Spec = seldonPodSpec.Spec
-		// add more annotations from metadata
-		for k, v := range seldonPodSpec.Metadata.Annotations {
-			deploy.Annotations[k] = v
-			deploy.Spec.Template.ObjectMeta.Annotations[k] = v
-		}
 	}
 
 	// Add Pod Security Context
