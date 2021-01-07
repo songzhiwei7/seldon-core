@@ -1,23 +1,8 @@
 approvers:
-- axsaucedo
-- gsunner
-- cliveseldon
-- ryandawsonuk
-- adriangonz
-- SachinVarghese
-- glindsell
-- RafalSkolasinski
-- jklaise
+- simon-cj
+- codeflitting
 reviewers:
-- axsaucedo
-- gsunner
-- cliveseldon
-- jklaise
-- ryandawsonuk
-- gipster
-- arnaudvl
-- adriangonz
-- phsiao
-- SachinVarghese
-- RafalSkolasinski
-- glindsell
+- simon-cj
+- codeflitting
+- FogDong 
+- songzhiwei7 
