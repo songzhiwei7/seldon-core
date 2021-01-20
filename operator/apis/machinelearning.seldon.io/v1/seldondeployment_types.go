@@ -19,6 +19,7 @@ package v1
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"fmt"
 	"strconv"
 
 	kedav1alpha1 "github.com/kedacore/keda/api/v1alpha1"
@@ -326,7 +327,7 @@ func ConvertIstioStringMatch(match StringMatch) *istio_networking.StringMatch {
 	} else if match.Exclude != "" {
 		return &istio_networking.StringMatch{
 			MatchType: &istio_networking.StringMatch_Regex{
-				Regex: match.Exclude,
+				Regex: fmt.Sprintf("^[^%s]*$", match.Exclude),
 			},
 		}
 	}
