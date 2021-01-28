@@ -949,6 +949,11 @@ func createDeploymentWithoutEngine(depName string, seldonId string, seldonPodSpe
 	deploy.Spec.Template.Annotations["prometheus.io/path"] = getPrometheusPath(mlDep)
 	deploy.Spec.Template.Annotations["prometheus.io/scrape"] = "true"
 
+	// Set istio sidecar annotations
+	if istioSidecar, ok := p.Annotations["sidecar.istio.io/inject"]; ok {
+		deploy.Spec.Template.Annotations["sidecar.istio.io/inject"] = istioSidecar
+	}
+
 	if p.Shadow == true {
 		deploy.Spec.Template.ObjectMeta.Labels[machinelearningv1.Label_shadow] = "true"
 	}
